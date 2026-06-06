@@ -1,0 +1,23 @@
+name: trackops
+description: TrackOps Train System Dashboard
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  firebase_core: ^3.15.2
+  firebase_database: ^11.3.4
+  fl_chart: ^0.68.0
+  google_fonts: ^6.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
