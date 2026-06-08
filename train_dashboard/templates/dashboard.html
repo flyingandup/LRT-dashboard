@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TrackOps — Train System Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d0f14;
+    --surface:   #141720;
+    --surface2:  #1c2030;
+    --border:    rgba(255,255,255,0.07);
+    --border2:   rgba(255,255,255,0.13);
+    --text:      #e8eaf0;
+    --muted:     #7b8199;
+    --accent:    #3d8ef0;
+    --active:    #22c97a;
+    --maint:     #f0a040;
+    --crit:      #e84040;
+    --warn:      #f0a040;
+    --info:      #3d8ef0;
+    --font-head: 'Barlow Condensed', sans-serif;
+    --font-body: 'Barlow', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ---- HEADER ---- */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    height: 60px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .logo-icon svg { width: 18px; height: 18px; fill: white; }
+
+  .logo-text {
+    font-family: var(--font-head);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text);
+  }
+
+  .logo-text span { color: var(--accent); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--active);
+  }
+
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--active);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  #last-updated {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ---- LAYOUT ---- */
+  main {
+    padding: 28px 32px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-family: var(--font-head);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  /* ---- KPI CARDS ---- */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .kpi-card:hover { border-color: var(--border2); }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .kpi-card.total::before  { background: var(--accent); }
+  .kpi-card.active::before { background: var(--active); }
+  .kpi-card.maint::before  { background: var(--maint); }
+  .kpi-card.mileage::before{ background: #a06cf0; }
+
+  .kpi-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+
+  .kpi-value {
+    font-family: var(--font-head);
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .kpi-value.active-val { color: var(--active); }
+  .kpi-value.maint-val  { color: var(--maint); }
+  .kpi-value.mile-val   { color: #a06cf0; font-size: 32px; }
+
+  .kpi-sub {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+  }
+
+  /* ---- MAIN GRID ---- */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  /* ---- PANEL ---- */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-title {
+    font-family: var(--font-head);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* ---- CHART ---- */
+  .chart-wrap {
+    padding: 20px;
+  }
+
+  /* ---- STATUS TABLE ---- */
+  .train-table { width: 100%; border-collapse: collapse; }
+
+  .train-table th {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 10px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .train-table td {
+    padding: 11px 20px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .train-table tr:last-child td { border-bottom: none; }
+
+  .train-table tr:hover td { background: var(--surface2); }
+
+  .train-id {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .train-name { font-weight: 500; }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+  }
+
+  .status-pill.active {
+    background: rgba(34,201,122,0.12);
+    color: var(--active);
+    border: 1px solid rgba(34,201,122,0.25);
+  }
+
+  .status-pill.maintenance {
+    background: rgba(240,160,64,0.12);
+    color: var(--maint);
+    border: 1px solid rgba(240,160,64,0.25);
+  }
+
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor;
+  }
+
+  .mileage-mono {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  /* ---- ALERTS ---- */
+  .alerts-list { padding: 8px 0; }
+
+  .alert-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .alert-item:last-child { border-bottom: none; }
+  .alert-item:hover { background: var(--surface2); }
+
+  .alert-bar {
+    width: 3px;
+    min-height: 36px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .alert-bar.critical { background: var(--crit); }
+  .alert-bar.warning  { background: var(--warn); }
+  .alert-bar.info     { background: var(--info); }
+
+  .alert-body { flex: 1; }
+
+  .alert-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 3px;
+  }
+
+  .alert-severity {
+    font-size: 10px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .alert-severity.critical { color: var(--crit); }
+  .alert-severity.warning  { color: var(--warn); }
+  .alert-severity.info     { color: var(--info); }
+
+  .alert-train {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .alert-time {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  .alert-message {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  /* ---- ALERT SUMMARY MINI CARDS ---- */
+  .alert-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .alert-mini {
+    text-align: center;
+    padding: 8px;
+    border-radius: 6px;
+  }
+
+  .alert-mini.critical { background: rgba(232,64,64,0.1); }
+  .alert-mini.warning  { background: rgba(240,160,64,0.1); }
+  .alert-mini.info     { background: rgba(61,142,240,0.1); }
+
+  .alert-mini-count {
+    font-family: var(--font-head);
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .alert-mini.critical .alert-mini-count { color: var(--crit); }
+  .alert-mini.warning  .alert-mini-count { color: var(--warn); }
+  .alert-mini.info     .alert-mini-count { color: var(--info); }
+
+  .alert-mini-label {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-top: 2px;
+    opacity: 0.7;
+  }
+
+  .alert-mini.critical .alert-mini-label { color: var(--crit); }
+  .alert-mini.warning  .alert-mini-label { color: var(--warn); }
+  .alert-mini.info     .alert-mini-label { color: var(--info); }
+
+  /* ---- BOTTOM ROW ---- */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 1024px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .main-grid { grid-template-columns: 1fr; }
+    .bottom-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 4h16v10H4V4zm2 2v6h12V6H6zm-2 11h16v1H4v-1zm3 2l-1 2h12l-1-2H7z"/>
+      </svg>
+    </div>
+    <span class="logo-text">Track<span>Ops</span></span>
+  </div>
+  <div class="header-right">
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      LIVE
+    </div>
+    <div id="last-updated">Updated: —</div>
+  </div>
+</header>
+
+<main>
+  <!-- KPI CARDS -->
+  <div class="section-label">Fleet Overview</div>
+  <div class="kpi-grid">
+    <div class="kpi-card total">
+      <div class="kpi-label">Total Trains</div>
+      <div class="kpi-value" id="kpi-total">—</div>
+      <div class="kpi-sub">Fleet size</div>
+    </div>
+    <div class="kpi-card active">
+      <div class="kpi-label">Active</div>
+      <div class="kpi-value active-val" id="kpi-active">—</div>
+      <div class="kpi-sub" id="kpi-active-pct">— % in service</div>
+    </div>
+    <div class="kpi-card maint">
+      <div class="kpi-label">In Maintenance</div>
+      <div class="kpi-value maint-val" id="kpi-maint">—</div>
+      <div class="kpi-sub" id="kpi-maint-pct">— % of fleet</div>
+    </div>
+    <div class="kpi-card mileage">
+      <div class="kpi-label">Avg Mileage</div>
+      <div class="kpi-value mile-val" id="kpi-mileage">—</div>
+      <div class="kpi-sub">km per train (avg)</div>
+    </div>
+  </div>
+
+  <!-- CHART + ALERTS SIDE PANEL -->
+  <div class="main-grid">
+    <!-- Mileage Chart -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Mileage per Train</span>
+      </div>
+      <div class="chart-wrap">
+        <div style="position: relative; width: 100%; height: 260px;">
+          <canvas id="mileageChart" role="img" aria-label="Bar chart showing mileage per train">Loading chart...</canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert Summary -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Alert Summary</span>
+      </div>
+      <div class="alert-summary-grid">
+        <div class="alert-mini critical">
+          <div class="alert-mini-count" id="count-critical">—</div>
+          <div class="alert-mini-label">Critical</div>
+        </div>
+        <div class="alert-mini warning">
+          <div class="alert-mini-count" id="count-warning">—</div>
+          <div class="alert-mini-label">Warning</div>
+        </div>
+        <div class="alert-mini info">
+          <div class="alert-mini-count" id="count-info">—</div>
+          <div class="alert-mini-label">Info</div>
+        </div>
+      </div>
+      <div class="alerts-list" id="alerts-list">
+        <div class="alert-item"><div style="color: var(--muted); padding: 10px; font-size:13px;">Loading alerts...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRAIN STATUS TABLE -->
+  <div class="section-label">Train Status</div>
+  <div class="panel bottom-row" style="display: block;">
+    <table class="train-table">
+      <thead>
+        <tr>
+          <th>Train ID</th>
+          <th>Name</th>
+          <th>Route</th>
+          <th>Status</th>
+          <th>Mileage (km)</th>
+          <th>Last Service</th>
+        </tr>
+      </thead>
+      <tbody id="train-tbody">
+        <tr><td colspan="6" style="padding: 20px; color: var(--muted);">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+let mileageChart = null;
+
+async function fetchSummary() {
+  const res = await fetch('/api/summary');
+  const d = await res.json();
+
+  document.getElementById('kpi-total').textContent  = d.total_trains;
+  document.getElementById('kpi-active').textContent = d.active;
+  document.getElementById('kpi-maint').textContent  = d.maintenance;
+  document.getElementById('kpi-mileage').textContent = d.avg_mileage.toLocaleString();
+
+  const activePct = Math.round((d.active / d.total_trains) * 100);
+  const maintPct  = Math.round((d.maintenance / d.total_trains) * 100);
+  document.getElementById('kpi-active-pct').textContent = `${activePct}% in service`;
+  document.getElementById('kpi-maint-pct').textContent  = `${maintPct}% of fleet`;
+
+  document.getElementById('count-critical').textContent = d.alert_counts.critical;
+  document.getElementById('count-warning').textContent  = d.alert_counts.warning;
+  document.getElementById('count-info').textContent     = d.alert_counts.info;
+
+  document.getElementById('last-updated').textContent = `Updated: ${d.timestamp}`;
+}
+
+async function fetchTrains() {
+  const res = await fetch('/api/trains');
+  const d = await res.json();
+  const tbody = document.getElementById('train-tbody');
+  tbody.innerHTML = d.trains.map(t => `
+    <tr>
+      <td><span class="train-id">${t.id}</span></td>
+      <td><span class="train-name">${t.name}</span></td>
+      <td style="color: var(--muted); font-size:13px;">${t.route}</td>
+      <td>
+        <span class="status-pill ${t.status}">
+          <span class="status-dot"></span>
+          ${t.status === 'active' ? 'Active' : 'Maintenance'}
+        </span>
+      </td>
+      <td><span class="mileage-mono">${t.mileage.toLocaleString()}</span></td>
+      <td style="font-family: var(--font-mono); font-size: 12px; color: var(--muted);">${t.last_service}</td>
+    </tr>
+  `).join('');
+}
+
+async function fetchAlerts() {
+  const res = await fetch('/api/alerts');
+  const d = await res.json();
+  const list = document.getElementById('alerts-list');
+  list.innerHTML = d.alerts.map(a => `
+    <div class="alert-item">
+      <div class="alert-bar ${a.severity}"></div>
+      <div class="alert-body">
+        <div class="alert-meta">
+          <span class="alert-severity ${a.severity}">${a.severity}</span>
+          <span class="alert-train">${a.train}</span>
+          <span class="alert-time">${a.time}</span>
+        </div>
+        <div class="alert-message">${a.message}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function fetchMileageChart() {
+  const res = await fetch('/api/mileage-chart');
+  const d = await res.json();
+
+  const colors = d.statuses.map(s =>
+    s === 'active' ? 'rgba(34,201,122,0.75)' : 'rgba(240,160,64,0.75)'
+  );
+  const borders = d.statuses.map(s =>
+    s === 'active' ? '#22c97a' : '#f0a040'
+  );
+
+  const ctx = document.getElementById('mileageChart').getContext('2d');
+  if (mileageChart) mileageChart.destroy();
+
+  mileageChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: d.labels,
+      datasets: [{
+        label: 'Mileage (km)',
+        data: d.values,
+        backgroundColor: colors,
+        borderColor: borders,
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1c2030',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          titleColor: '#e8eaf0',
+          bodyColor: '#7b8199',
+          callbacks: {
+            label: ctx => ` ${ctx.parsed.y.toLocaleString()} km`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#7b8199',
+            font: { family: 'Barlow', size: 11 },
+            maxRotation: 30,
+          },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        },
+        y: {
+          ticks: {
+            color: '#7b8199',
+            font: { family: 'DM Mono', size: 11 },
+            callback: v => v.toLocaleString()
+          },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        }
+      }
+    }
+  });
+}
+
+async function loadAll() {
+  await Promise.all([fetchSummary(), fetchTrains(), fetchAlerts(), fetchMileageChart()]);
+}
+
+loadAll();
+setInterval(loadAll, 30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+[
+  {"id": "BP-001", "name": "Bukit Panjang W1", "status": "active",      "mileage": 1800, "route": "Bukit Panjang West L1",    "last_service": "2026-03-15"},
+  {"id": "BP-002", "name": "Bukit Panjang W2", "status": "active",      "mileage": 72800, "route": "Bukit Panjang West L2",    "last_service": "2026-03-15"},
+  {"id": "PG-001", "name": "Punggol W1",    "status": "maintenance", "mileage": 119002, "route": "Punggol West L1", "last_service": "2026-01-20"},
+  {"id": "PG-002", "name": "Punggol E1",    "status": "active",      "mileage": 358704,  "route": "Punggol East L1",     "last_service": "2026-04-10"},
+  {"id": "PG-003", "name": "Punggol W2",    "status": "maintenance", "mileage": 193002, "route": "Punggol West L2", "last_service": "2026-01-20"},
+  {"id": "PG-004", "name": "Punggol E2",    "status": "active",      "mileage": 34204,  "route": "Punggol East L2",     "last_service": "2026-04-10"},
+  {"id": "BP-003", "name": "Bukit Panjang E1",    "status": "active",      "mileage": 1273805, "route": "Bukit Panjang East L1",    "last_service": "2026-02-28"},
+  {"id": "BP-004", "name": "Bukit Panjang E2",    "status": "maintenance", "mileage": 122034, "route": "Bukit Panjang East L2",    "last_service": "2026-02-28"},
+  {"id": "SK-001", "name": "Sengkang E1",    "status": "maintenance",      "mileage": 39200,  "route": "Sengkang East L1",      "last_service": "2026-03-30"},
+  {"id": "SK-002", "name": "Sengkang W1",   "status": "active",      "mileage": 120500, "route": "Sengkang West L1", "last_service": "2026-04-05"},
+  {"id": "SK-003", "name": "Sengkang E2",    "status": "active",      "mileage": 397004,  "route": "Sengkang East L2",      "last_service": "2026-03-30"},
+  {"id": "SK-004", "name": "Sengkang W2",   "status": "active",      "mileage": 14500, "route": "Sengkang West L2", "last_service": "2026-04-05"}
+]
