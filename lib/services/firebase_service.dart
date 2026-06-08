@@ -41,4 +41,12 @@ class FirebaseService {
     trains.sort((a, b) => a.id.compareTo(b.id));
     return trains;
   }
+
+  static Future<void> clearMilestoneAlert(String trainId, String cycleName, int currentMileage) async {
+    final ref = _db.ref('trains/$trainId');
+    await ref.update({
+      'last_service': DateTime.now().toIso8601String().split('T')[0],
+      'last_service_mileage/$cycleName': currentMileage,
+    });
+  }
 }
