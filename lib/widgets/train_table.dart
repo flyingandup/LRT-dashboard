@@ -33,7 +33,7 @@ class TrainTable extends StatelessWidget {
       ),
       child: Row(children: [
         _hCell('Train ID', flex: 2),
-        _hCell('Name', flex: 3),
+        _hCell('Current Station', flex: 3),
         _hCell('Route', flex: 3),
         _hCell('Status', flex: 2),
         _hCell('Mileage (km)', flex: 2),
@@ -59,7 +59,7 @@ class TrainTable extends StatelessWidget {
       color: index.isEven ? AppColors.surface : AppColors.surface2,
       child: Row(children: [
         Expanded(flex: 2, child: _cell(Text(t.id, style: GoogleFonts.dmMono(fontSize: 12, color: AppColors.muted)))),
-        Expanded(flex: 3, child: _cell(Text(t.name, style: GoogleFonts.barlow(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textMain)))),
+        Expanded(flex: 3, child: _cell(Text(t.currentStation, style: GoogleFonts.barlow(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textMain)))),
         Expanded(flex: 3, child: _cell(Text(t.route, style: GoogleFonts.barlow(fontSize: 13, color: AppColors.muted)))),
         Expanded(flex: 2, child: _cell(
           Container(

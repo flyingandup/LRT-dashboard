@@ -7,6 +7,7 @@ class Train {
   final int mileage;
   final String route;
   final String lastService;
+  final String currentStation;
   final Map<String, int> lastServiceMileage;
 
   Train({
@@ -17,26 +18,27 @@ class Train {
     required this.route,
     required this.lastService,
     required this.lastServiceMileage,
+    required this.currentStation,
   });
 
-factory Train.fromFirebase(String id, Map<dynamic, dynamic> data) {
-
-  final serviceMap = <String, int>{};
-  if (data['last_service_mileage'] is Map) {
-    (data['last_service_mileage'] as Map).forEach((key, value) {
-      serviceMap[key.toString()] = (value as num?)?.toInt() ?? 0;
-    });
+  factory Train.fromFirebase(String id, Map<dynamic, dynamic> data) {
+    final serviceMap = <String, int>{};
+    if (data['last_service_mileage'] is Map) {
+      (data['last_service_mileage'] as Map).forEach((key, value) {
+        serviceMap[key.toString()] = (value as num?)?.toInt() ?? 0;
+      });
+    }
+    return Train(
+      id: id,
+      name: data['name']?.toString() ?? '',
+      status: data['status']?.toString() ?? 'active',
+      mileage: (data['mileage'] as num?)?.toInt() ?? 0,
+      route: data['route']?.toString() ?? '',
+      lastService: data['last_service']?.toString() ?? '',
+      lastServiceMileage: serviceMap,
+      currentStation: data['current_station']?.toString() ?? ''
+    );
   }
-  return Train(
-    id:          id,
-    name:        data['name']?.toString()         ?? '',
-    status:      data['status']?.toString()       ?? 'active',
-    mileage:     (data['mileage'] as num?)?.toInt() ?? 0,
-    route:       data['route']?.toString()        ?? '',
-    lastService: data['last_service']?.toString() ?? '',
-    lastServiceMileage: serviceMap,
-  );
-}
 
   bool get isActive => status == 'active';
 }
