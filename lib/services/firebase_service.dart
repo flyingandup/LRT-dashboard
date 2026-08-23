@@ -1,5 +1,7 @@
 // lib/services/firebase_service.dart
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:trackops/dataconnect_generated/example.dart';
 import '../models/models.dart';
 
 class FirebaseService {
@@ -24,7 +26,6 @@ class FirebaseService {
       return trains;
     });
   }
-
   // One-time fetch
   static Future<List<Train>> fetchTrains() async {
     final snapshot = await _db.ref('trains').get();
@@ -48,5 +49,20 @@ class FirebaseService {
       'last_service': DateTime.now().toIso8601String().split('T')[0],
       'last_service_mileage/$cycleName': currentMileage,
     });
+  }
+
+  Future<List<String>> fetchStations() async {
+    try {
+      final result = await ExampleConnector.instance.getAllStations().execute();
+      final stations = result.data?.stations ?? [];
+
+      return stations
+      .map((station) => station.name?.toString())
+      .whereType<String>()
+      .toList();
+    } catch (e) {
+      debugPrint('Error fetching stations: $e');
+      return [];
+    }
   }
 }

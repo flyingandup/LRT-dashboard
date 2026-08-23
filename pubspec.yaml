@@ -13,6 +13,7 @@ dependencies:
   firebase_database: ^11.3.4
   fl_chart: ^0.68.0
   google_fonts: ^6.2.1
+  firebase_data_connect: ^0.1.5+4
 
 dev_dependencies:
   flutter_test:

@@ -15,7 +15,12 @@ class TrainTable extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.border),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2))
+        ],
       ),
       child: Column(children: [
         _buildHeader(),
@@ -48,7 +53,11 @@ class TrainTable extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
         child: Text(text.toUpperCase(),
-          style: GoogleFonts.barlow(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.muted, letterSpacing: 0.7)),
+            style: GoogleFonts.barlow(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.muted,
+                letterSpacing: 0.7)),
       ),
     );
   }
@@ -58,33 +67,66 @@ class TrainTable extends StatelessWidget {
     return Container(
       color: index.isEven ? AppColors.surface : AppColors.surface2,
       child: Row(children: [
-        Expanded(flex: 2, child: _cell(Text(t.id, style: GoogleFonts.dmMono(fontSize: 12, color: AppColors.muted)))),
-        Expanded(flex: 3, child: _cell(Text(t.currentStation, style: GoogleFonts.barlow(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textMain)))),
-        Expanded(flex: 3, child: _cell(Text(t.route, style: GoogleFonts.barlow(fontSize: 13, color: AppColors.muted)))),
-        Expanded(flex: 2, child: _cell(
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(99),
-              border: Border.all(color: statusColor.withOpacity(0.3)),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Container(width: 6, height: 6, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
-              const SizedBox(width: 5),
-              Text(t.isActive ? 'Active' : 'Maintenance',
-                style: GoogleFonts.dmMono(fontSize: 11, fontWeight: FontWeight.w500, color: statusColor)),
-            ]),
-          ),
-        )),
-        Expanded(flex: 2, child: _cell(Text(_fmt(t.mileage), style: GoogleFonts.dmMono(fontSize: 13, color: AppColors.textMain)))),
-        Expanded(flex: 2, child: _cell(Text(t.lastService, style: GoogleFonts.dmMono(fontSize: 12, color: AppColors.muted)))),
+        Expanded(
+            flex: 2,
+            child: _cell(Text(t.id,
+                style:
+                    GoogleFonts.dmMono(fontSize: 12, color: AppColors.muted)))),
+        Expanded(
+            flex: 3,
+            child: _cell(Text(t.currentStation,
+                style: GoogleFonts.barlow(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textMain)))),
+        Expanded(
+            flex: 3,
+            child: _cell(Text(t.route,
+                style:
+                    GoogleFonts.barlow(fontSize: 13, color: AppColors.muted)))),
+        Expanded(
+            flex: 2,
+            child: _cell(
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(color: statusColor.withOpacity(0.3)),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                          color: statusColor, shape: BoxShape.circle)),
+                  const SizedBox(width: 5),
+                  Text(t.isActive ? 'Active' : 'Maintenance',
+                      style: GoogleFonts.dmMono(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: statusColor)),
+                ]),
+              ),
+            )),
+        Expanded(
+            flex: 2,
+            child: _cell(Text(_fmt(t.mileage),
+                style: GoogleFonts.dmMono(
+                    fontSize: 13, color: AppColors.textMain)))),
+        Expanded(
+            flex: 2,
+            child: _cell(Text(t.lastService,
+                style:
+                    GoogleFonts.dmMono(fontSize: 12, color: AppColors.muted)))),
       ]),
     );
   }
 
-  Widget _cell(Widget child) =>
-      Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13), child: child);
+  Widget _cell(Widget child) => Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      child: child);
 
   String _fmt(int n) {
     final s = n.toString();
