@@ -7,6 +7,12 @@ part 'get_all_distances.dart';
 
 part 'get_all_stations.dart';
 
+part 'update_station.dart';
+
+part 'delete_station.dart';
+
+part 'add_station.dart';
+
 
 
 
@@ -23,6 +29,21 @@ class ExampleConnector {
   
   GetAllStationsVariablesBuilder getAllStations () {
     return GetAllStationsVariablesBuilder(dataConnect, );
+  }
+  
+  
+  UpdateStationVariablesBuilder updateStation ({required String id, required String name, }) {
+    return UpdateStationVariablesBuilder(dataConnect, id: id,name: name,);
+  }
+  
+  
+  DeleteStationVariablesBuilder deleteStation ({required String id, }) {
+    return DeleteStationVariablesBuilder(dataConnect, id: id,);
+  }
+  
+  
+  AddStationVariablesBuilder addStation ({required String name, }) {
+    return AddStationVariablesBuilder(dataConnect, name: name,);
   }
   
 

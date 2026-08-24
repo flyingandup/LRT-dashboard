@@ -18,9 +18,11 @@ class GetAllStationsVariablesBuilder {
 
 @immutable
 class GetAllStationsStations {
+  final String id;
   final String name;
   GetAllStationsStations.fromJson(dynamic json):
   
+  id = nativeFromJson<String>(json['id']),
   name = nativeFromJson<String>(json['name']);
   @override
   bool operator ==(Object other) {
@@ -32,20 +34,23 @@ class GetAllStationsStations {
     }
 
     final GetAllStationsStations otherTyped = other as GetAllStationsStations;
-    return name == otherTyped.name;
+    return id == otherTyped.id && 
+    name == otherTyped.name;
     
   }
   @override
-  int get hashCode => name.hashCode;
+  int get hashCode => Object.hashAll([id.hashCode, name.hashCode]);
   
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
+    json['id'] = nativeToJson<String>(id);
     json['name'] = nativeToJson<String>(name);
     return json;
   }
 
   GetAllStationsStations({
+    required this.id,
     required this.name,
   });
 }

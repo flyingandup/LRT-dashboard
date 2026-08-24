@@ -18,11 +18,13 @@ class GetAllDistancesVariablesBuilder {
 
 @immutable
 class GetAllDistancesDistances {
+  final String id;
   final String firstStation;
   final String secondStation;
   final double distance;
   GetAllDistancesDistances.fromJson(dynamic json):
   
+  id = nativeFromJson<String>(json['id']),
   firstStation = nativeFromJson<String>(json['firstStation']),
   secondStation = nativeFromJson<String>(json['secondStation']),
   distance = nativeFromJson<double>(json['distance']);
@@ -36,17 +38,19 @@ class GetAllDistancesDistances {
     }
 
     final GetAllDistancesDistances otherTyped = other as GetAllDistancesDistances;
-    return firstStation == otherTyped.firstStation && 
+    return id == otherTyped.id && 
+    firstStation == otherTyped.firstStation && 
     secondStation == otherTyped.secondStation && 
     distance == otherTyped.distance;
     
   }
   @override
-  int get hashCode => Object.hashAll([firstStation.hashCode, secondStation.hashCode, distance.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, firstStation.hashCode, secondStation.hashCode, distance.hashCode]);
   
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
+    json['id'] = nativeToJson<String>(id);
     json['firstStation'] = nativeToJson<String>(firstStation);
     json['secondStation'] = nativeToJson<String>(secondStation);
     json['distance'] = nativeToJson<double>(distance);
@@ -54,6 +58,7 @@ class GetAllDistancesDistances {
   }
 
   GetAllDistancesDistances({
+    required this.id,
     required this.firstStation,
     required this.secondStation,
     required this.distance,

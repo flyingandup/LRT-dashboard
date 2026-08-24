@@ -26,6 +26,7 @@ class FirebaseService {
       return trains;
     });
   }
+
   // One-time fetch
   static Future<List<Train>> fetchTrains() async {
     final snapshot = await _db.ref('trains').get();
@@ -43,7 +44,8 @@ class FirebaseService {
     return trains;
   }
 
-  static Future<void> clearMilestoneAlert(String trainId, String cycleName, int currentMileage) async {
+  static Future<void> clearMilestoneAlert(
+      String trainId, String cycleName, int currentMileage) async {
     final ref = _db.ref('trains/$trainId');
     await ref.update({
       'last_service': DateTime.now().toIso8601String().split('T')[0],
@@ -51,15 +53,25 @@ class FirebaseService {
     });
   }
 
-  Future<List<String>> fetchStations() async {
+  Future<List<Map<String, dynamic>>> fetchStations() async {
     try {
       final result = await ExampleConnector.instance.getAllStations().execute();
       final stations = result.data?.stations ?? [];
 
       return stations
-      .map((station) => station.name?.toString())
-      .whereType<String>()
-      .toList();
+          .where((station) {
+            final id = station.id;
+            final name = station.name;
+
+            if (id == null || name == null) return false;
+            if (id.toString().trim().isEmpty) return false;
+            if (name.trim().isEmpty) return false;
+
+            return true;
+          })
+          .map((station) =>
+              {"id": station.id.trim(), "name": station.name.trim()})
+          .toList();
     } catch (e) {
       debugPrint('Error fetching stations: $e');
       return [];

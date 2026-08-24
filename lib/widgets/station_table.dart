@@ -1,12 +1,20 @@
 // lib/widgets/train_table.dart
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/models.dart';
 import '../theme.dart';
 
 class StationTable extends StatelessWidget {
-  final List<String> stations;
-  const StationTable({super.key, required this.stations});
+  final List<Map<String, dynamic>> stations;
+  final Function(String id, String newName)? onEditStation;
+  final Function(String id)? onDeleteStation;
+  const StationTable(
+      {super.key,
+      required this.stations,
+      this.onEditStation,
+      this.onDeleteStation});
 
   @override
   Widget build(BuildContext context) {
@@ -36,9 +44,7 @@ class StationTable extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
         border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
-      child: Row(children: [
-        _hCell('Station Name', flex: 2),
-      ]),
+      child: Row(children: [_hCell('Station Name', flex: 2)]),
     );
   }
 
@@ -57,20 +63,143 @@ class StationTable extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(String s, int index) {
-    return Container(
-      color: index.isEven ? AppColors.surface : AppColors.surface2,
-      child: Row(children: [
-        Expanded(
-            flex: 2,
-            child: _cell(Text(s,
-                style:
-                    GoogleFonts.dmMono(fontSize: 12, color: AppColors.muted)))),
-      ]),
-    );
+  Widget _buildRow(Map<String, dynamic> station, int index) {
+    bool isHovered = false;
+    return StatefulBuilder(builder: (context, setState) {
+      return MouseRegion(
+        onEnter: (_) => setState(() => isHovered = true),
+        onExit: (_) => setState(() => isHovered = false),
+        child: Container(
+          color: isHovered
+              ? AppColors.surface2.withValues(alpha: 0.7)
+              : index.isEven
+                  ? AppColors.surface
+                  : AppColors.surface2,
+          child: Row(children: [
+            Expanded(
+                flex: 1,
+                child: _cell(Text(station["name"],
+                    style: GoogleFonts.dmMono(
+                        fontSize: 12, color: AppColors.muted)))),
+            SizedBox(
+                width: 48,
+                child: isHovered
+                    ? IconButton(
+                        icon: const Icon(Icons.edit,
+                            size: 16, color: AppColors.accent),
+                        onPressed: () => _showEditDialog(context, station),
+                        tooltip: 'Edit Station',
+                        style: IconButton.styleFrom(
+                            minimumSize: const Size(24, 40),
+                            shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadiusGeometry.circular(10))))
+                    : const SizedBox.shrink()),
+            SizedBox(
+                width: 48,
+                child: isHovered
+                    ? IconButton(
+                        icon: const Icon(Icons.delete,
+                            size: 16, color: AppColors.critical),
+                        onPressed: () => _showDeleteDialog(context, station),
+                        tooltip: 'Delete Station',
+                        style: IconButton.styleFrom(
+                            minimumSize: const Size(24, 40),
+                            shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadiusGeometry.circular(10))))
+                    : const SizedBox.shrink()),
+            const SizedBox(width: 4)
+          ]),
+        ),
+      );
+    });
   }
 
   Widget _cell(Widget child) => Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       child: child);
+
+  void _showEditDialog(BuildContext context, Map<String, dynamic> station) {
+    final controller = TextEditingController(text: station["name"]);
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text('Edit Station',
+            style: GoogleFonts.barlow(
+                fontWeight: FontWeight.w600, color: AppColors.textMain)),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+              labelText: 'Station Name', border: OutlineInputBorder()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text('Cancel',
+                style: GoogleFonts.barlow(
+                    color: AppColors.muted, fontWeight: FontWeight.w500)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accent,
+              elevation: 0,
+            ),
+            onPressed: () {
+              final newName = controller.text.trim();
+              if (newName.isNotEmpty && onEditStation != null) {
+                onEditStation!(station["id"], newName);
+              }
+              Navigator.pop(dialogContext);
+            },
+            child: Text('Save',
+                style: GoogleFonts.barlow(
+                    color: Colors.white, fontWeight: FontWeight.w500)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context, Map<String, dynamic> station) {
+    final String name = station['name'];
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text('Delete $name?',
+            style: GoogleFonts.barlow(
+                fontWeight: FontWeight.w600, color: AppColors.textMain)),
+        content: Text(
+          'Deleting $name station will also delete any references to it in the distance table',
+          style: GoogleFonts.barlow(
+              fontSize: 14, color: AppColors.textMain, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text('Cancel',
+                style: GoogleFonts.barlow(
+                    color: AppColors.muted, fontWeight: FontWeight.w500)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.critical,
+              elevation: 0,
+            ),
+            onPressed: () async {
+              onDeleteStation!(station['id']);
+              Navigator.pop(dialogContext);
+            },
+            child: Text('Delete Station',
+                style: GoogleFonts.barlow(
+                    color: Colors.white, fontWeight: FontWeight.w500)),
+          ),
+        ],
+      ),
+    );
+  }
 }
