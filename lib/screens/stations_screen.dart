@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trackops/dataconnect_generated/example.dart';
@@ -5,6 +7,8 @@ import 'package:trackops/models/models.dart';
 import 'package:trackops/services/firebase_service.dart';
 import 'package:trackops/theme.dart';
 import 'package:trackops/widgets/app_header.dart';
+import 'package:trackops/widgets/distance_table.dart';
+import 'package:trackops/widgets/import_csv_button.dart';
 import 'package:trackops/widgets/station_table.dart';
 
 class stationsScreen extends StatefulWidget {
@@ -16,12 +20,15 @@ class stationsScreen extends StatefulWidget {
 
 class _stationsScreenState extends State<stationsScreen> {
   List<Map<String, dynamic>> stations = [];
+  List<Map<String, dynamic>> distances = [];
+  List<List<dynamic>> current_distances = [];
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadStations();
+    _loadDistances();
   }
 
   Future<void> _loadStations() async {
@@ -29,12 +36,35 @@ class _stationsScreenState extends State<stationsScreen> {
       final result = await ExampleConnector.instance.getAllStations().execute();
       setState(() {
         stations = result.data.stations
-            .map((s) => {'id': s.id, 'name': s.name})
+            .map((s) => {'id': s.id, 'name': s.name, 'order': s.orderIndex})
             .toList();
         isLoading = false;
       });
     } catch (e) {
       debugPrint('Error loading stations: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _loadDistances() async {
+    try {
+      final result =
+          await ExampleConnector.instance.getAllDistances().execute();
+      setState(() {
+        distances = result.data.distances
+            .map((d) => {
+                  'id': d.id,
+                  'firstStationName': d.firstStation.name,
+                  'firstStationId' : d.firstStation.id,
+                  'secondStationName': d.secondStation.name,
+                  'secondStationId' : d.secondStation.id,
+                  'distance': d.distance
+                })
+            .toList();
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading distances: $e');
       setState(() => isLoading = false);
     }
   }
@@ -92,8 +122,8 @@ class _stationsScreenState extends State<stationsScreen> {
                                 style: GoogleFonts.barlow(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w500,
-                                    height: 1.0)),
-                            icon: Icon(
+                                    height: 0)),
+                            icon: const Icon(
                               Icons.add,
                               color: Colors.white,
                             )),
@@ -123,7 +153,24 @@ class _stationsScreenState extends State<stationsScreen> {
                           debugPrint('Failed to delete station: $e');
                         }
                       },
+                      onUpdateStationOrder: (currentIdx, targetIdx) =>
+                          _moveStation(currentIdx, targetIdx),
                     ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        _sectionLabel('Distances'),
+                        const Spacer(),
+                        importCsvButton(onValueSelected: (newValue){
+                          setState(() {
+                            current_distances = newValue;
+                            debugPrint('distances ${current_distances.toString()}');
+                          });
+                        })
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    DistanceTable(distances: distances)
                   ],
                 ),
               ),
@@ -146,6 +193,9 @@ class _stationsScreenState extends State<stationsScreen> {
 
   void _showAddDialog(BuildContext context) {
     final controller = TextEditingController();
+
+    int nextOrderIndex =
+        stations.isEmpty ? 0 : (stations.last['order'] as int) + 1;
 
     showDialog(
       context: context,
@@ -172,18 +222,20 @@ class _stationsScreenState extends State<stationsScreen> {
               elevation: 0,
             ),
             onPressed: () async {
+              final navigator = Navigator.of(dialogContext);
               final newName = controller.text.trim();
               if (newName.isNotEmpty) {
                 try {
                   await ExampleConnector.instance
-                      .addStation(name: newName)
+                      .addStation(name: newName, orderIndex: nextOrderIndex)
                       .execute();
                   await _loadStations();
                 } catch (e) {
                   debugPrint('Failed to add station: $e');
                 }
               }
-              Navigator.pop(dialogContext);
+              if (!mounted || !navigator.mounted) return;
+              navigator.pop();
             },
             child: Text('Save',
                 style: GoogleFonts.barlow(
@@ -192,5 +244,31 @@ class _stationsScreenState extends State<stationsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _moveStation(int currentIdx, int targetIdx) async {
+    if (targetIdx < 0 || targetIdx >= stations.length) return;
+
+    final currentStation = stations[currentIdx];
+    final targetStation = stations[targetIdx];
+
+    final currentId = currentStation['id'];
+    final targetId = targetStation['id'];
+
+    final currentOrder = currentStation['order'];
+    final targetOrder = targetStation['order'];
+
+    try {
+      await ExampleConnector.instance
+          .updateStationOrder(id: currentId, orderIndex: targetOrder)
+          .execute();
+
+      await ExampleConnector.instance
+          .updateStationOrder(id: targetId, orderIndex: currentOrder)
+          .execute();
+      await _loadStations();
+    } catch (e) {
+      debugPrint("Error updating station order: $e");
+    }
   }
 }

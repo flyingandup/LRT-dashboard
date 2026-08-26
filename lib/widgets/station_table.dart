@@ -1,20 +1,19 @@
 // lib/widgets/train_table.dart
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/models.dart';
 import '../theme.dart';
 
 class StationTable extends StatelessWidget {
   final List<Map<String, dynamic>> stations;
   final Function(String id, String newName)? onEditStation;
   final Function(String id)? onDeleteStation;
+  final Function(int currentIdx, int targetIdx)? onUpdateStationOrder;
   const StationTable(
       {super.key,
       required this.stations,
       this.onEditStation,
-      this.onDeleteStation});
+      this.onDeleteStation,
+      this.onUpdateStationOrder});
 
   @override
   Widget build(BuildContext context) {
@@ -39,9 +38,9 @@ class StationTable extends StatelessWidget {
 
   Widget _buildHeader() {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.surface2,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
         border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Row(children: [_hCell('Station Name', flex: 2)]),
@@ -81,6 +80,23 @@ class StationTable extends StatelessWidget {
                 child: _cell(Text(station["name"],
                     style: GoogleFonts.dmMono(
                         fontSize: 12, color: AppColors.muted)))),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_upward, size: 16),
+                  onPressed: index > 0
+                      ? () => onUpdateStationOrder!(index, index - 1)
+                      : null,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.arrow_downward, size: 16),
+                  onPressed: index < stations.length - 1
+                      ? () => onUpdateStationOrder!(index, index + 1)
+                      : null,
+                ),
+              ],
+            ),
             SizedBox(
                 width: 48,
                 child: isHovered

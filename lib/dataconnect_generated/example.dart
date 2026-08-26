@@ -13,6 +13,8 @@ part 'delete_station.dart';
 
 part 'add_station.dart';
 
+part 'update_station_order.dart';
+
 
 
 
@@ -42,8 +44,13 @@ class ExampleConnector {
   }
   
   
-  AddStationVariablesBuilder addStation ({required String name, }) {
-    return AddStationVariablesBuilder(dataConnect, name: name,);
+  AddStationVariablesBuilder addStation ({required String name, required int orderIndex, }) {
+    return AddStationVariablesBuilder(dataConnect, name: name,orderIndex: orderIndex,);
+  }
+  
+  
+  UpdateStationOrderVariablesBuilder updateStationOrder ({required String id, required int orderIndex, }) {
+    return UpdateStationOrderVariablesBuilder(dataConnect, id: id,orderIndex: orderIndex,);
   }
   
 

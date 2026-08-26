@@ -2,9 +2,10 @@ part of 'example.dart';
 
 class AddStationVariablesBuilder {
   String name;
+  int orderIndex;
 
   final FirebaseDataConnect _dataConnect;
-  AddStationVariablesBuilder(this._dataConnect, {required  this.name,});
+  AddStationVariablesBuilder(this._dataConnect, {required  this.name,required  this.orderIndex,});
   Deserializer<AddStationData> dataDeserializer = (dynamic json)  => AddStationData.fromJson(jsonDecode(json));
   Serializer<AddStationVariables> varsSerializer = (AddStationVariables vars) => jsonEncode(vars.toJson());
   Future<OperationResult<AddStationData, AddStationVariables>> execute() {
@@ -12,7 +13,7 @@ class AddStationVariablesBuilder {
   }
 
   MutationRef<AddStationData, AddStationVariables> ref() {
-    AddStationVariables vars= AddStationVariables(name: name,);
+    AddStationVariables vars= AddStationVariables(name: name,orderIndex: orderIndex,);
     return _dataConnect.mutation("AddStation", dataDeserializer, varsSerializer, vars);
   }
 }
@@ -88,10 +89,12 @@ class AddStationData {
 @immutable
 class AddStationVariables {
   final String name;
+  final int orderIndex;
   @Deprecated('fromJson is deprecated for Variable classes as they are no longer required for deserialization.')
   AddStationVariables.fromJson(Map<String, dynamic> json):
   
-  name = nativeFromJson<String>(json['name']);
+  name = nativeFromJson<String>(json['name']),
+  orderIndex = nativeFromJson<int>(json['orderIndex']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -102,21 +105,24 @@ class AddStationVariables {
     }
 
     final AddStationVariables otherTyped = other as AddStationVariables;
-    return name == otherTyped.name;
+    return name == otherTyped.name && 
+    orderIndex == otherTyped.orderIndex;
     
   }
   @override
-  int get hashCode => name.hashCode;
+  int get hashCode => Object.hashAll([name.hashCode, orderIndex.hashCode]);
   
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
     json['name'] = nativeToJson<String>(name);
+    json['orderIndex'] = nativeToJson<int>(orderIndex);
     return json;
   }
 
   AddStationVariables({
     required this.name,
+    required this.orderIndex,
   });
 }
 

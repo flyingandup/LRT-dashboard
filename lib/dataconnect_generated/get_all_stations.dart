@@ -20,10 +20,12 @@ class GetAllStationsVariablesBuilder {
 class GetAllStationsStations {
   final String id;
   final String name;
+  final int orderIndex;
   GetAllStationsStations.fromJson(dynamic json):
   
   id = nativeFromJson<String>(json['id']),
-  name = nativeFromJson<String>(json['name']);
+  name = nativeFromJson<String>(json['name']),
+  orderIndex = nativeFromJson<int>(json['orderIndex']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -35,23 +37,26 @@ class GetAllStationsStations {
 
     final GetAllStationsStations otherTyped = other as GetAllStationsStations;
     return id == otherTyped.id && 
-    name == otherTyped.name;
+    name == otherTyped.name && 
+    orderIndex == otherTyped.orderIndex;
     
   }
   @override
-  int get hashCode => Object.hashAll([id.hashCode, name.hashCode]);
+  int get hashCode => Object.hashAll([id.hashCode, name.hashCode, orderIndex.hashCode]);
   
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
     json['id'] = nativeToJson<String>(id);
     json['name'] = nativeToJson<String>(name);
+    json['orderIndex'] = nativeToJson<int>(orderIndex);
     return json;
   }
 
   GetAllStationsStations({
     required this.id,
     required this.name,
+    required this.orderIndex,
   });
 }
 
