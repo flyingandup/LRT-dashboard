@@ -77,4 +77,28 @@ class FirebaseService {
       return [];
     }
   }
+
+  static Future<void> bulkInsertDistances(
+      List<Map<String, dynamic>> newDistances) async {
+    try {
+      // Map your list of dictionaries directly into Data Connect mutation futures
+      await ExampleConnector.instance.clearDistance().execute();
+      final mutationFutures = newDistances.map((item) {
+        return ExampleConnector.instance
+            .insertSingleDistance(
+              // Extract the values from your dictionary keys
+              firstStationId: item['firstStationId'],
+              secondStationId: item['secondStationId'],
+              distance: item['distance'],
+            )
+            .execute();
+      });
+
+      // Fire all network mutations concurrently
+      await Future.wait(mutationFutures);
+      print("All distances successfully inserted!");
+    } catch (e) {
+      print("Failed to bulk insert: $e");
+    }
+  }
 }

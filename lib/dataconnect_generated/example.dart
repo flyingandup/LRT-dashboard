@@ -15,6 +15,10 @@ part 'add_station.dart';
 
 part 'update_station_order.dart';
 
+part 'clear_distance.dart';
+
+part 'insert_single_distance.dart';
+
 
 
 
@@ -51,6 +55,16 @@ class ExampleConnector {
   
   UpdateStationOrderVariablesBuilder updateStationOrder ({required String id, required int orderIndex, }) {
     return UpdateStationOrderVariablesBuilder(dataConnect, id: id,orderIndex: orderIndex,);
+  }
+  
+  
+  ClearDistanceVariablesBuilder clearDistance () {
+    return ClearDistanceVariablesBuilder(dataConnect, );
+  }
+  
+  
+  InsertSingleDistanceVariablesBuilder insertSingleDistance ({required String firstStationId, required String secondStationId, required double distance, }) {
+    return InsertSingleDistanceVariablesBuilder(dataConnect, firstStationId: firstStationId,secondStationId: secondStationId,distance: distance,);
   }
   
 

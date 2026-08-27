@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trackops/dataconnect_generated/example.dart';
 import 'package:trackops/models/models.dart';
+import 'package:trackops/services/csv_service.dart';
 import 'package:trackops/services/firebase_service.dart';
 import 'package:trackops/theme.dart';
 import 'package:trackops/widgets/app_header.dart';
@@ -11,14 +12,14 @@ import 'package:trackops/widgets/distance_table.dart';
 import 'package:trackops/widgets/import_csv_button.dart';
 import 'package:trackops/widgets/station_table.dart';
 
-class stationsScreen extends StatefulWidget {
-  const stationsScreen({super.key});
+class StationsScreen extends StatefulWidget {
+  const StationsScreen({super.key});
 
   @override
-  State<stationsScreen> createState() => _stationsScreenState();
+  State<StationsScreen> createState() => _stationsScreenState();
 }
 
-class _stationsScreenState extends State<stationsScreen> {
+class _stationsScreenState extends State<StationsScreen> {
   List<Map<String, dynamic>> stations = [];
   List<Map<String, dynamic>> distances = [];
   List<List<dynamic>> current_distances = [];
@@ -55,9 +56,9 @@ class _stationsScreenState extends State<stationsScreen> {
             .map((d) => {
                   'id': d.id,
                   'firstStationName': d.firstStation.name,
-                  'firstStationId' : d.firstStation.id,
+                  'firstStationId': d.firstStation.id,
                   'secondStationName': d.secondStation.name,
-                  'secondStationId' : d.secondStation.id,
+                  'secondStationId': d.secondStation.id,
                   'distance': d.distance
                 })
             .toList();
@@ -161,12 +162,19 @@ class _stationsScreenState extends State<stationsScreen> {
                       children: [
                         _sectionLabel('Distances'),
                         const Spacer(),
-                        importCsvButton(onValueSelected: (newValue){
-                          setState(() {
-                            current_distances = newValue;
-                            debugPrint('distances ${current_distances.toString()}');
-                          });
-                        })
+                        ImportCsvButton(
+                          onValueSelected: (newValue) async {
+                            await _loadStations();
+
+                            if (!mounted) return;
+
+                            setState(() {
+                              current_distances = newValue;
+                            });
+
+                            await _updateDistances(newValue, context);
+                          },
+                        )
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -269,6 +277,33 @@ class _stationsScreenState extends State<stationsScreen> {
       await _loadStations();
     } catch (e) {
       debugPrint("Error updating station order: $e");
+    }
+  }
+
+  Future<void> _updateDistances(
+      List<List<dynamic>> rows, BuildContext context) async {
+    final cleanedRows = csvHeaderRemover(rows);
+    if (validateStations(cleanedRows, stations)) {
+      final result = transformDistances(cleanedRows, stations);
+      await FirebaseService.bulkInsertDistances(result);
+
+      await _loadDistances();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Distances imported successfully'),
+          backgroundColor: AppColors.accent,
+        ),
+      );
+    } else {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('CSV file is invalid or contains unknown stations.'),
+          backgroundColor: AppColors.critical,
+        ),
+      );
     }
   }
 }

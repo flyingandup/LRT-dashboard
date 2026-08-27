@@ -65,7 +65,7 @@ class _AppHeaderState extends State<AppHeader> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => stationsScreen()));
+                          builder: (context) => StationsScreen()));
                 },
                 child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,

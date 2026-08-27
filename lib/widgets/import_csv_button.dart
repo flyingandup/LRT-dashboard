@@ -5,14 +5,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:trackops/services/csv_service.dart';
 import 'package:trackops/theme.dart';
 
-class importCsvButton extends StatelessWidget {
+class ImportCsvButton extends StatelessWidget {
   final ValueChanged<List<List<dynamic>>> onValueSelected;
-  const importCsvButton({
+  const ImportCsvButton({
     super.key,
     required this.onValueSelected,
   });
 
-  Future<void> pickCsvFile() async {
+  Future<void> pickCsvFile(BuildContext context) async {
     PlatformFile? file = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: ['csv'],
@@ -21,7 +21,22 @@ class importCsvButton extends StatelessWidget {
     if (file != null) {
       final bytes = await file.readAsBytes();
       String csvString = utf8.decode(bytes);
+
       List<List<dynamic>> parsedData = convertFromCsv(csvString);
+
+      // Guard against using context across an async gap
+      if (!context.mounted) return;
+
+      if (parsedData.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to parse CSV or file is empty.'),
+            backgroundColor: AppColors.critical,
+          ),
+        );
+        return;
+      }
+
       onValueSelected(parsedData);
     }
   }
@@ -35,7 +50,7 @@ class importCsvButton extends StatelessWidget {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
       onPressed: () {
-        pickCsvFile();
+        pickCsvFile(context);
       },
       label: Text('Import CSV',
           style: GoogleFonts.barlow(
