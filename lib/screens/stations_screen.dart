@@ -9,6 +9,7 @@ import 'package:trackops/services/firebase_service.dart';
 import 'package:trackops/theme.dart';
 import 'package:trackops/widgets/app_header.dart';
 import 'package:trackops/widgets/distance_table.dart';
+import 'package:trackops/widgets/export_csv_button.dart';
 import 'package:trackops/widgets/import_csv_button.dart';
 import 'package:trackops/widgets/station_table.dart';
 
@@ -16,10 +17,10 @@ class StationsScreen extends StatefulWidget {
   const StationsScreen({super.key});
 
   @override
-  State<StationsScreen> createState() => _stationsScreenState();
+  State<StationsScreen> createState() => _StationsScreenState();
 }
 
-class _stationsScreenState extends State<StationsScreen> {
+class _StationsScreenState extends State<StationsScreen> {
   List<Map<String, dynamic>> stations = [];
   List<Map<String, dynamic>> distances = [];
   List<List<dynamic>> current_distances = [];
@@ -140,6 +141,7 @@ class _stationsScreenState extends State<StationsScreen> {
                               .execute();
                           // Refresh station list state here
                           await _loadStations();
+                          await _loadDistances();
                         } catch (e) {
                           debugPrint('Failed to update station: $e');
                         }
@@ -150,6 +152,7 @@ class _stationsScreenState extends State<StationsScreen> {
                               .deleteStation(id: id)
                               .execute();
                           await _loadStations();
+                          await _loadDistances();
                         } catch (e) {
                           debugPrint('Failed to delete station: $e');
                         }
@@ -162,19 +165,17 @@ class _stationsScreenState extends State<StationsScreen> {
                       children: [
                         _sectionLabel('Distances'),
                         const Spacer(),
+                        ExportCsvButton(
+                          distances: distances,
+                        ),
+                        const SizedBox(width: 8),
                         ImportCsvButton(
                           onValueSelected: (newValue) async {
                             await _loadStations();
-
                             if (!mounted) return;
-
-                            setState(() {
-                              current_distances = newValue;
-                            });
-
                             await _updateDistances(newValue, context);
                           },
-                        )
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -283,27 +284,107 @@ class _stationsScreenState extends State<StationsScreen> {
   Future<void> _updateDistances(
       List<List<dynamic>> rows, BuildContext context) async {
     final cleanedRows = csvHeaderRemover(rows);
-    if (validateStations(cleanedRows, stations)) {
-      final result = transformDistances(cleanedRows, stations);
-      await FirebaseService.bulkInsertDistances(result);
 
-      await _loadDistances();
+    if (!validateStations(cleanedRows, stations)) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Distances imported successfully'),
-          backgroundColor: AppColors.accent,
-        ),
-      );
-    } else {
-      if (!context.mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('CSV file is invalid or contains unknown stations.'),
           backgroundColor: AppColors.critical,
         ),
       );
+      return;
     }
+    final transformedData = transformDistances(cleanedRows, stations);
+    // await FirebaseService.bulkInsertDistances(result);
+
+    // await _loadDistances();
+    if (!context.mounted) return;
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text('Replace Distance Data?',
+            style: GoogleFonts.barlow(
+                fontWeight: FontWeight.w600, color: AppColors.textMain)),
+        content: Text(
+          'Importing new distance data will replace existing data. Export existing data before importing to back it up?',
+          style: GoogleFonts.barlow(
+              fontSize: 14, color: AppColors.textMain, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text('Cancel',
+                style: GoogleFonts.barlow(
+                    color: AppColors.muted, fontWeight: FontWeight.w500)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.maint,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(
+              'Import without Backup',
+              style: GoogleFonts.barlow(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+                height: 0,
+              ),
+            ),
+            onPressed: () async {
+              await _processImport(transformedData, context);
+              if (dialogContext.mounted) {
+                Navigator.of(dialogContext).pop();
+              }
+            },
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.active,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(
+              'Export Backup & Import',
+              style: GoogleFonts.barlow(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+                height: 0,
+              ),
+            ),
+            onPressed: () async {
+              if (dialogContext.mounted) {
+                Navigator.of(dialogContext).pop();
+              }
+              try {
+                await encodeDistancesToCsvFile(distances);
+              } catch (e) {
+                debugPrint('Backup export failed: $e');
+              }
+              await _processImport(transformedData, context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _processImport(
+      List<Map<String, dynamic>> data, BuildContext context) async {
+    await FirebaseService.bulkInsertDistances(data);
+    await _loadDistances();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Distances imported successfully'),
+        backgroundColor: AppColors.accent,
+      ),
+    );
   }
 }

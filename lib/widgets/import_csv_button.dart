@@ -20,9 +20,8 @@ class ImportCsvButton extends StatelessWidget {
 
     if (file != null) {
       final bytes = await file.readAsBytes();
-      String csvString = utf8.decode(bytes);
-
-      List<List<dynamic>> parsedData = convertFromCsv(csvString);
+      final String csvString = utf8.decode(bytes);
+      final parsedData = convertFromCsv(csvString);
 
       // Guard against using context across an async gap
       if (!context.mounted) return;
@@ -45,18 +44,23 @@ class ImportCsvButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.active,
-          elevation: 0,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-      onPressed: () {
-        pickCsvFile(context);
-      },
-      label: Text('Import CSV',
-          style: GoogleFonts.barlow(
-              color: Colors.white, fontWeight: FontWeight.w500, height: 0)),
+        backgroundColor: AppColors.active,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      onPressed: () => pickCsvFile(context),
+      label: Text(
+        'Import CSV',
+        style: GoogleFonts.barlow(
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
+          height: 0,
+        ),
+      ),
       icon: const Icon(
-        Icons.file_upload,
+        Icons.file_download,
         color: Colors.white,
       ),
     );

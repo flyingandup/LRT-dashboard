@@ -1,4 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:csv/csv.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:file_saver/file_saver.dart';
 
 List<List<dynamic>> convertFromCsv(String csvString) {
   List<List<dynamic>> rows = csv.decode(csvString);
@@ -81,4 +86,29 @@ List<Map<String, dynamic>> transformDistances(
       'distance': distance,
     };
   }).toList();
+}
+
+List<List<dynamic>> transformDistancesToList(
+    List<Map<String, dynamic>> distances) {
+  final List<List<dynamic>> rows = [
+    ['First Station', 'Second Station', 'Distance'],
+    ...distances.map(
+      (d) => [d['firstStationName'], d['secondStationName'], d['distance']],
+    ),
+  ];
+
+  return rows;
+}
+
+Future<void> encodeDistancesToCsvFile(
+    List<Map<String, dynamic>> distances) async {
+  final String csvString = csv.encode(transformDistancesToList(distances));
+  final Uint8List bytes = Uint8List.fromList(utf8.encode(csvString));
+
+  await FileSaver.instance.saveFile(
+    name: 'distances_export',
+    bytes: bytes,
+    fileExtension: 'csv',
+    mimeType: MimeType.csv,
+  );
 }
