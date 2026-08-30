@@ -327,10 +327,12 @@ ref.execute();
 String firstStationId = ...;
 String secondStationId = ...;
 double distance = ...;
+int orderIndex = ...;
 ExampleConnector.instance.insertSingleDistance(
   firstStationId: firstStationId,
   secondStationId: secondStationId,
   distance: distance,
+  orderIndex: orderIndex,
 ).execute();
 ```
 
@@ -351,6 +353,7 @@ final result = await ExampleConnector.instance.insertSingleDistance(
   firstStationId: firstStationId,
   secondStationId: secondStationId,
   distance: distance,
+  orderIndex: orderIndex,
 );
 InsertSingleDistanceData data = result.data;
 final ref = result.ref;
@@ -363,11 +366,13 @@ An example of how to use the `Ref` object is shown below:
 String firstStationId = ...;
 String secondStationId = ...;
 double distance = ...;
+int orderIndex = ...;
 
 final ref = ExampleConnector.instance.insertSingleDistance(
   firstStationId: firstStationId,
   secondStationId: secondStationId,
   distance: distance,
+  orderIndex: orderIndex,
 ).ref();
 ref.execute();
 ```

@@ -75,12 +75,15 @@ List<Map<String, dynamic>> transformDistances(
       station['name'].toString().trim().toLowerCase(): station['id'].toString(),
   };
 
-  return distances.map((d) {
+  return distances.asMap().entries.map((entry) {
+    final int index = entry.key;
+    final List<dynamic> d = entry.value;
     final String firstStationName = d[0].toString().trim().toLowerCase();
     final String secondStationName = d[1].toString().trim().toLowerCase();
     final double distance = double.parse(d[2].toString());
 
     return {
+      'orderIndex': index + 1,
       'firstStationId': stationLookup[firstStationName],
       'secondStationId': stationLookup[secondStationName],
       'distance': distance,

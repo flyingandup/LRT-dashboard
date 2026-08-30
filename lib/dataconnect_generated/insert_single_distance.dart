@@ -4,9 +4,10 @@ class InsertSingleDistanceVariablesBuilder {
   String firstStationId;
   String secondStationId;
   double distance;
+  int orderIndex;
 
   final FirebaseDataConnect _dataConnect;
-  InsertSingleDistanceVariablesBuilder(this._dataConnect, {required  this.firstStationId,required  this.secondStationId,required  this.distance,});
+  InsertSingleDistanceVariablesBuilder(this._dataConnect, {required  this.firstStationId,required  this.secondStationId,required  this.distance,required  this.orderIndex,});
   Deserializer<InsertSingleDistanceData> dataDeserializer = (dynamic json)  => InsertSingleDistanceData.fromJson(jsonDecode(json));
   Serializer<InsertSingleDistanceVariables> varsSerializer = (InsertSingleDistanceVariables vars) => jsonEncode(vars.toJson());
   Future<OperationResult<InsertSingleDistanceData, InsertSingleDistanceVariables>> execute() {
@@ -14,7 +15,7 @@ class InsertSingleDistanceVariablesBuilder {
   }
 
   MutationRef<InsertSingleDistanceData, InsertSingleDistanceVariables> ref() {
-    InsertSingleDistanceVariables vars= InsertSingleDistanceVariables(firstStationId: firstStationId,secondStationId: secondStationId,distance: distance,);
+    InsertSingleDistanceVariables vars= InsertSingleDistanceVariables(firstStationId: firstStationId,secondStationId: secondStationId,distance: distance,orderIndex: orderIndex,);
     return _dataConnect.mutation("InsertSingleDistance", dataDeserializer, varsSerializer, vars);
   }
 }
@@ -92,12 +93,14 @@ class InsertSingleDistanceVariables {
   final String firstStationId;
   final String secondStationId;
   final double distance;
+  final int orderIndex;
   @Deprecated('fromJson is deprecated for Variable classes as they are no longer required for deserialization.')
   InsertSingleDistanceVariables.fromJson(Map<String, dynamic> json):
   
   firstStationId = nativeFromJson<String>(json['firstStationId']),
   secondStationId = nativeFromJson<String>(json['secondStationId']),
-  distance = nativeFromJson<double>(json['distance']);
+  distance = nativeFromJson<double>(json['distance']),
+  orderIndex = nativeFromJson<int>(json['orderIndex']);
   @override
   bool operator ==(Object other) {
     if(identical(this, other)) {
@@ -110,11 +113,12 @@ class InsertSingleDistanceVariables {
     final InsertSingleDistanceVariables otherTyped = other as InsertSingleDistanceVariables;
     return firstStationId == otherTyped.firstStationId && 
     secondStationId == otherTyped.secondStationId && 
-    distance == otherTyped.distance;
+    distance == otherTyped.distance && 
+    orderIndex == otherTyped.orderIndex;
     
   }
   @override
-  int get hashCode => Object.hashAll([firstStationId.hashCode, secondStationId.hashCode, distance.hashCode]);
+  int get hashCode => Object.hashAll([firstStationId.hashCode, secondStationId.hashCode, distance.hashCode, orderIndex.hashCode]);
   
 
   Map<String, dynamic> toJson() {
@@ -122,6 +126,7 @@ class InsertSingleDistanceVariables {
     json['firstStationId'] = nativeToJson<String>(firstStationId);
     json['secondStationId'] = nativeToJson<String>(secondStationId);
     json['distance'] = nativeToJson<double>(distance);
+    json['orderIndex'] = nativeToJson<int>(orderIndex);
     return json;
   }
 
@@ -129,6 +134,7 @@ class InsertSingleDistanceVariables {
     required this.firstStationId,
     required this.secondStationId,
     required this.distance,
+    required this.orderIndex,
   });
 }
 

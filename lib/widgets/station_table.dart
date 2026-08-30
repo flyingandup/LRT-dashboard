@@ -7,13 +7,13 @@ class StationTable extends StatelessWidget {
   final List<Map<String, dynamic>> stations;
   final Function(String id, String newName)? onEditStation;
   final Function(String id)? onDeleteStation;
-  final Function(int currentIdx, int targetIdx)? onUpdateStationOrder;
+  final Function(int oldIndex, int newIndex)? onReorderStations;
   const StationTable(
       {super.key,
       required this.stations,
       this.onEditStation,
       this.onDeleteStation,
-      this.onUpdateStationOrder});
+      this.onReorderStations});
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +31,21 @@ class StationTable extends StatelessWidget {
       ),
       child: Column(children: [
         _buildHeader(),
-        ...stations.asMap().entries.map((e) => _buildRow(e.value, e.key)),
+        ReorderableListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: stations.length,
+          onReorder: (int oldIndex, int newIndex) {
+            if (onReorderStations != null) {
+              onReorderStations!(oldIndex, newIndex);
+            }
+          },
+          itemBuilder: (context, index) {
+            final station = stations[index];
+            return _buildRow(context, station, index, ValueKey(station['id']));
+          },
+          buildDefaultDragHandles: false,
+        ),
       ]),
     );
   }
@@ -62,74 +76,73 @@ class StationTable extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(Map<String, dynamic> station, int index) {
+  Widget _buildRow(
+      BuildContext context, Map<String, dynamic> station, int index, Key key) {
     bool isHovered = false;
-    return StatefulBuilder(builder: (context, setState) {
-      return MouseRegion(
-        onEnter: (_) => setState(() => isHovered = true),
-        onExit: (_) => setState(() => isHovered = false),
-        child: Container(
-          color: isHovered
-              ? AppColors.surface2.withValues(alpha: 0.7)
-              : index.isEven
-                  ? AppColors.surface
-                  : AppColors.surface2,
-          child: Row(children: [
-            Expanded(
-                flex: 1,
-                child: _cell(Text(station["name"],
-                    style: GoogleFonts.dmMono(
-                        fontSize: 12, color: AppColors.muted)))),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_upward, size: 16),
-                  onPressed: index > 0
-                      ? () => onUpdateStationOrder!(index, index - 1)
-                      : null,
+    return StatefulBuilder(
+        key: key,
+        builder: (context, setState) {
+          return MouseRegion(
+            onEnter: (_) => setState(() => isHovered = true),
+            onExit: (_) => setState(() => isHovered = false),
+            child: Container(
+              color: isHovered
+                  ? AppColors.surface2.withValues(alpha: 0.7)
+                  : index.isEven
+                      ? AppColors.surface
+                      : AppColors.surface2,
+              child: Row(children: [
+                MouseRegion(
+                  cursor: SystemMouseCursors.grab,
+                  child: ReorderableDragStartListener(
+                    index: index,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Icon(Icons.drag_indicator),
+                    ),
+                  ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.arrow_downward, size: 16),
-                  onPressed: index < stations.length - 1
-                      ? () => onUpdateStationOrder!(index, index + 1)
-                      : null,
+                Expanded(
+                  child: _cell(
+                    Text(
+                      station["name"],
+                      style: GoogleFonts.dmMono(
+                          fontSize: 12, color: AppColors.muted),
+                    ),
+                  ),
                 ),
-              ],
+                SizedBox(
+                    width: 48,
+                    child: isHovered
+                        ? IconButton(
+                            icon: const Icon(Icons.edit,
+                                size: 16, color: AppColors.accent),
+                            onPressed: () => _showEditDialog(context, station),
+                            tooltip: 'Edit Station',
+                            style: IconButton.styleFrom(
+                                minimumSize: const Size(24, 40),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10))))
+                        : const SizedBox.shrink()),
+                SizedBox(
+                    width: 48,
+                    child: isHovered
+                        ? IconButton(
+                            icon: const Icon(Icons.delete,
+                                size: 16, color: AppColors.critical),
+                            onPressed: () =>
+                                _showDeleteDialog(context, station),
+                            tooltip: 'Delete Station',
+                            style: IconButton.styleFrom(
+                                minimumSize: const Size(24, 40),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10))))
+                        : const SizedBox.shrink()),
+                const SizedBox(width: 4)
+              ]),
             ),
-            SizedBox(
-                width: 48,
-                child: isHovered
-                    ? IconButton(
-                        icon: const Icon(Icons.edit,
-                            size: 16, color: AppColors.accent),
-                        onPressed: () => _showEditDialog(context, station),
-                        tooltip: 'Edit Station',
-                        style: IconButton.styleFrom(
-                            minimumSize: const Size(24, 40),
-                            shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadiusGeometry.circular(10))))
-                    : const SizedBox.shrink()),
-            SizedBox(
-                width: 48,
-                child: isHovered
-                    ? IconButton(
-                        icon: const Icon(Icons.delete,
-                            size: 16, color: AppColors.critical),
-                        onPressed: () => _showDeleteDialog(context, station),
-                        tooltip: 'Delete Station',
-                        style: IconButton.styleFrom(
-                            minimumSize: const Size(24, 40),
-                            shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadiusGeometry.circular(10))))
-                    : const SizedBox.shrink()),
-            const SizedBox(width: 4)
-          ]),
-        ),
-      );
-    });
+          );
+        });
   }
 
   Widget _cell(Widget child) => Padding(

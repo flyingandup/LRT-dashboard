@@ -63,8 +63,8 @@ class ExampleConnector {
   }
   
   
-  InsertSingleDistanceVariablesBuilder insertSingleDistance ({required String firstStationId, required String secondStationId, required double distance, }) {
-    return InsertSingleDistanceVariablesBuilder(dataConnect, firstStationId: firstStationId,secondStationId: secondStationId,distance: distance,);
+  InsertSingleDistanceVariablesBuilder insertSingleDistance ({required String firstStationId, required String secondStationId, required double distance, required int orderIndex, }) {
+    return InsertSingleDistanceVariablesBuilder(dataConnect, firstStationId: firstStationId,secondStationId: secondStationId,distance: distance,orderIndex: orderIndex,);
   }
   
 

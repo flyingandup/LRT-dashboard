@@ -8,6 +8,7 @@ import 'package:trackops/services/csv_service.dart';
 import 'package:trackops/services/firebase_service.dart';
 import 'package:trackops/theme.dart';
 import 'package:trackops/widgets/app_header.dart';
+import 'package:trackops/widgets/distance_matrix_table.dart';
 import 'package:trackops/widgets/distance_table.dart';
 import 'package:trackops/widgets/export_csv_button.dart';
 import 'package:trackops/widgets/import_csv_button.dart';
@@ -23,14 +24,29 @@ class StationsScreen extends StatefulWidget {
 class _StationsScreenState extends State<StationsScreen> {
   List<Map<String, dynamic>> stations = [];
   List<Map<String, dynamic>> distances = [];
-  List<List<dynamic>> current_distances = [];
   bool isLoading = true;
+  bool isMatrixView = false;
 
   @override
   void initState() {
     super.initState();
-    _loadStations();
-    _loadDistances();
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    setState(() => isLoading = true);
+
+    try {
+      await Future.wait([_loadStations(), _loadDistances()]);
+    } catch (e) {
+      debugPrint("Error loading Initial Data : $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _loadStations() async {
@@ -40,11 +56,9 @@ class _StationsScreenState extends State<StationsScreen> {
         stations = result.data.stations
             .map((s) => {'id': s.id, 'name': s.name, 'order': s.orderIndex})
             .toList();
-        isLoading = false;
       });
     } catch (e) {
       debugPrint('Error loading stations: $e');
-      setState(() => isLoading = false);
     }
   }
 
@@ -63,11 +77,9 @@ class _StationsScreenState extends State<StationsScreen> {
                   'distance': d.distance
                 })
             .toList();
-        isLoading = false;
       });
     } catch (e) {
       debugPrint('Error loading distances: $e');
-      setState(() => isLoading = false);
     }
   }
 
@@ -157,13 +169,48 @@ class _StationsScreenState extends State<StationsScreen> {
                           debugPrint('Failed to delete station: $e');
                         }
                       },
-                      onUpdateStationOrder: (currentIdx, targetIdx) =>
+                      onReorderStations: (currentIdx, targetIdx) =>
                           _moveStation(currentIdx, targetIdx),
                     ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
                         _sectionLabel('Distances'),
+                        const SizedBox(width: 16),
+                        SegmentedButton<bool>(
+                          segments: [
+                            ButtonSegment(
+                              value: false,
+                              label: Text('List',
+                                  style: GoogleFonts.barlow(
+                                      fontWeight: FontWeight.w500, height: 0)),
+                              icon: Icon(Icons.list),
+                            ),
+                            ButtonSegment(
+                              value: true,
+                              label: Text('Matrix',
+                                  style: GoogleFonts.barlow(
+                                      fontWeight: FontWeight.w500, height: 0)),
+                              icon: Icon(Icons.grid_on),
+                            ),
+                          ],
+                          selected: {isMatrixView},
+                          onSelectionChanged: (Set<bool> selection) {
+                            setState(() {
+                              isMatrixView = selection.first;
+                            });
+                          },
+                          style: SegmentedButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                              textStyle: GoogleFonts.barlow(),
+                              selectedBackgroundColor: AppColors.accent,
+                              selectedForegroundColor: AppColors.surface,
+                              disabledBackgroundColor: AppColors.surface,
+                              disabledForegroundColor: AppColors.accent,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10))),
+                          showSelectedIcon: false,
+                        ),
                         const Spacer(),
                         ExportCsvButton(
                           distances: distances,
@@ -179,7 +226,10 @@ class _StationsScreenState extends State<StationsScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    DistanceTable(distances: distances)
+                    isMatrixView
+                        ? DistanceMatrixTable(
+                            distances: distances, stations: stations)
+                        : DistanceTable(distances: distances)
                   ],
                 ),
               ),
@@ -255,29 +305,33 @@ class _StationsScreenState extends State<StationsScreen> {
     );
   }
 
-  Future<void> _moveStation(int currentIdx, int targetIdx) async {
-    if (targetIdx < 0 || targetIdx >= stations.length) return;
+  Future<void> _moveStation(int oldIndex, int newIndex) async {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
 
-    final currentStation = stations[currentIdx];
-    final targetStation = stations[targetIdx];
+    setState(() {
+      final item = stations.removeAt(oldIndex);
+      stations.insert(newIndex, item);
 
-    final currentId = currentStation['id'];
-    final targetId = targetStation['id'];
-
-    final currentOrder = currentStation['order'];
-    final targetOrder = targetStation['order'];
+      for (int i = 0; i < stations.length; i++) {
+        stations[i]['order'] = i;
+      }
+    });
 
     try {
-      await ExampleConnector.instance
-          .updateStationOrder(id: currentId, orderIndex: targetOrder)
-          .execute();
+      final start = oldIndex < newIndex ? oldIndex : newIndex;
+      final end = oldIndex > newIndex ? oldIndex : newIndex;
 
-      await ExampleConnector.instance
-          .updateStationOrder(id: targetId, orderIndex: currentOrder)
-          .execute();
-      await _loadStations();
+      for (int i = start; i <= end; i++) {
+        await ExampleConnector.instance
+            .updateStationOrder(
+                id: stations[i]['id'], orderIndex: stations[i]['order'])
+            .execute();
+      }
     } catch (e) {
       debugPrint("Error updating station order: $e");
+      await _loadStations();
     }
   }
 
@@ -296,9 +350,6 @@ class _StationsScreenState extends State<StationsScreen> {
       return;
     }
     final transformedData = transformDistances(cleanedRows, stations);
-    // await FirebaseService.bulkInsertDistances(result);
-
-    // await _loadDistances();
     if (!context.mounted) return;
     showDialog(
       context: context,

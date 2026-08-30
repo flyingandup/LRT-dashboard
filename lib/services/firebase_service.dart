@@ -53,31 +53,6 @@ class FirebaseService {
     });
   }
 
-  Future<List<Map<String, dynamic>>> fetchStations() async {
-    try {
-      final result = await ExampleConnector.instance.getAllStations().execute();
-      final stations = result.data?.stations ?? [];
-
-      return stations
-          .where((station) {
-            final id = station.id;
-            final name = station.name;
-
-            if (id == null || name == null) return false;
-            if (id.toString().trim().isEmpty) return false;
-            if (name.trim().isEmpty) return false;
-
-            return true;
-          })
-          .map((station) =>
-              {"id": station.id.trim(), "name": station.name.trim()})
-          .toList();
-    } catch (e) {
-      debugPrint('Error fetching stations: $e');
-      return [];
-    }
-  }
-
   static Future<void> bulkInsertDistances(
       List<Map<String, dynamic>> newDistances) async {
     try {
@@ -90,6 +65,7 @@ class FirebaseService {
               firstStationId: item['firstStationId'],
               secondStationId: item['secondStationId'],
               distance: item['distance'],
+              orderIndex: item['orderIndex'],
             )
             .execute();
       });
